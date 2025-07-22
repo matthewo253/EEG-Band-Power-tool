@@ -66,11 +66,12 @@ def bandpower(  data: NDArray[np.float64], fs: float, method: str, band: tuple[f
     bandpower = bandpower / simpson(psd, dx=freq_res) if relative else bandpower
     return bandpower
 
-# finds where to append the data in the csv for the def bandpower
+# lists the different signal processing methods
 methods = ("periodogram", "welch", "multitaper")
 
 datapoints = {method: [] for method in methods}
 
+# computes the bandpower for the 5 frequency bands
 for i in methods:
     bp = bandpower(eegData, fs, i, band=(0.5, 4))
     datapoints[i].append(bp)
@@ -94,7 +95,7 @@ alpha = [] # (8–12 Hz) relaxed
 beta = [] #(12–30 Hz) alert
 gamma = [] #(30 - 46 Hz) perception
 
-# finds the appropriate band power to put the data in the csv file
+# fits the data from the datapoints into 5 different bands
 
 for method in methods:
     bp_vals = datapoints[method]
@@ -112,10 +113,10 @@ beta_vals = np.hstack(beta)
 gamma_vals = np.hstack(gamma)
 
 
-# creates a string Array
+# creates a string Array as a label for the bandpower
 classState = np.array(['delta', 'theta', 'alpha', 'beta', 'gamma'])
 
-# creates new arrays to assign values to datapoints array and what bandpower it fits in
+# uses label array and matrix to assign bandpower to each row and give it a label
 allBandPowerData = []
 className = []
 
@@ -129,7 +130,7 @@ for i in datapoints:
 allBandPowerData = np.array(allBandPowerData)
 className = np.array(className)
 
-# trains the class state and datapoints
+# splits the data and reduces the feature space so it can be used for 2d visualization
 eegData_train, eegData_test, BandClass_train, BandClass_test = train_test_split(allBandPowerData, className, test_size=0.33, random_state=42)
 
 
@@ -160,21 +161,21 @@ plt.semilogy(freqAF3, psdAF3)
 plt.semilogy(freqF7, psdF7)
 plt.semilogy(freqF3, psdF3)
 plt.semilogy(freqFC5, psdFC5)
-plt.title("Power Spectral Density - AF3")
-plt.xlabel("Frequency (Hz)")
-plt.ylabel("Power Spectral Density (log scale)")
+plt.title("Power Spectral Density for AF3, F7, F3, FC5")
+plt.xlabel("Frequency")
+plt.ylabel("Power Spectral Density")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# graphs all the alpha powers of each of the bandpowers
+# graphs a boxplot for the power of each of the EEG frequencies o
 plt.figure(figsize=(8, 5))
 plt.boxplot(
     [delta_vals, theta_vals, alpha_vals, beta_vals, gamma_vals],
     labels=["delta", "theta", "alpha", "beta", "gamma"]
 )
-plt.title("Alpha Power by Mental State")
-plt.xlabel("Mental State")
+plt.title("Alpha Power by the different Cognitive States")
+plt.xlabel("Cognitive State")
 plt.ylabel("Alpha Band Power")
 plt.tight_layout()
 plt.show()
@@ -188,7 +189,7 @@ colors = {
 }
 
 
-# Projects the pca of each of the Band Powers
+# Projects the band power based on the 2D PCA
 plt.figure(figsize=(8, 6))
 
 for label in classState:
@@ -210,7 +211,7 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# Shows the Mean band power fo each of the methods
+# Shows the Mean band power of each of the methods
 
 bands = ["delta (0.5–4Hz)", "theta (4–8Hz)", "alpha (8–13Hz)", "beta (13–30Hz)", "gamma (30–46Hz)"]
 
@@ -237,8 +238,8 @@ for i in range(len(methods)):
 
 
 plt.colorbar(im, label="Mean Power")
-plt.title("Mean Band Power Across Methods")
+plt.title("Mean Band Power Across different Signal Processing Methods")
 plt.xlabel("Frequency Band")
-plt.ylabel("Method")
+plt.ylabel("Signal Processing Method")
 plt.tight_layout()
 plt.show()
